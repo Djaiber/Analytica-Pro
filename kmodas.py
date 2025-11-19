@@ -7,26 +7,24 @@ import io
 import sys
 
 def text_to_pdf(text, pdf):
-    """Agrega texto a una página en un PDF."""
-    fig = plt.figure(figsize=(8.27, 11.69))  # A4 size
+    fig = plt.figure(figsize=(8.27, 11.69))
     plt.axis('off')
     plt.text(0.05, 0.95, text, va='top', ha='left', wrap=True, fontsize=8)
     pdf.savefig(fig)
     plt.close(fig)
 
 def run_kmodas(file_path, output_pdf_path="kmodas_output.pdf"):
-    """
-    Ejecuta el algoritmo K-Modas y guarda los resultados (gráficos y texto) en un archivo PDF.
-    """
-    dataset = pd.read_csv(file_path)
-    X = dataset[['X2']].values
+    try:
+        dataset = pd.read_csv(file_path)
+        X = dataset[['X2']].values
+    except (FileNotFoundError, KeyError) as e:
+        print(f"Error en K-Modas: {e}", file=sys.stderr)
+        return None
 
-    # Redirigir stdout para capturar la salida de texto
     old_stdout = sys.stdout
     sys.stdout = captured_output = io.StringIO()
 
     with PdfPages(output_pdf_path) as pdf:
-        # --- Gráfico del Método del Codo ---
         wcss = []
         for i in range(1, 11):
             kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
@@ -41,7 +39,6 @@ def run_kmodas(file_path, output_pdf_path="kmodas_output.pdf"):
         pdf.savefig(fig1)
         plt.close(fig1)
 
-        # --- Clustering y Resultados ---
         kmeans = KMeans(n_clusters=3, init='k-means++', max_iter=300, n_init=10, random_state=0)
         dataset['Cluster_X2'] = kmeans.fit_predict(X)
 
@@ -50,7 +47,6 @@ def run_kmodas(file_path, output_pdf_path="kmodas_output.pdf"):
         print("\nDataset con Clusters:")
         print(dataset)
 
-        # --- Gráfico de Clusters ---
         fig2 = plt.figure()
         plt.scatter(X[dataset['Cluster_X2'] == 0], [0]*len(X[dataset['Cluster_X2'] == 0]), color='red', label='Cluster 1')
         plt.scatter(X[dataset['Cluster_X2'] == 1], [0]*len(X[dataset['Cluster_X2'] == 1]), color='blue', label='Cluster 2')
@@ -62,14 +58,13 @@ def run_kmodas(file_path, output_pdf_path="kmodas_output.pdf"):
         pdf.savefig(fig2)
         plt.close(fig2)
 
-        # --- Guardar texto capturado en el PDF ---
-        sys.stdout = old_stdout  # Restaurar stdout
+        sys.stdout = old_stdout
         output_text = captured_output.getvalue()
         text_to_pdf(output_text, pdf)
     
     print(f"Resultados de K-Modas guardados en '{output_pdf_path}'")
+    return True
 
 
 if __name__ == '__main__':
-    # Reemplaza 'your_data.csv' con la ruta a tu archivo CSV
     run_kmodas('your_data.csv')
