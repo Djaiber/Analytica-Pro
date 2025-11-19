@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 def df_to_pdf(df, path="normalizacion_output.pdf"):
-    """Guarda un DataFrame de pandas en un archivo PDF."""
-    fig, ax = plt.subplots(figsize=(8.27, 11.69)) # Tamaño A4
+    fig, ax = plt.subplots(figsize=(8.27, 11.69))
     ax.axis('tight')
     ax.axis('off')
     tabla = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
@@ -19,9 +18,6 @@ def df_to_pdf(df, path="normalizacion_output.pdf"):
     print(f"DataFrame guardado en '{path}'")
 
 def normalizar_datos(ruta_csv, nombre_columna, output_pdf_path="normalizacion_output.pdf"):
-    """
-    Normaliza una columna de un CSV y guarda el DataFrame resultante en un PDF.
-    """
     try:
         df = pd.read_csv(ruta_csv)
     except FileNotFoundError:
@@ -37,11 +33,9 @@ def normalizar_datos(ruta_csv, nombre_columna, output_pdf_path="normalizacion_ou
 
     try:
         scaler = MinMaxScaler()
-        # Asegurarse de que la columna es numérica y tiene el formato correcto para sklearn
         columna_datos = df[[nombre_columna]].values.astype(float)
         df[f'{nombre_columna}_norm'] = scaler.fit_transform(columna_datos)
         
-        # Guardar el DataFrame resultante en un PDF
         df_to_pdf(df, path=output_pdf_path)
         
         return df
@@ -53,11 +47,6 @@ def normalizar_datos(ruta_csv, nombre_columna, output_pdf_path="normalizacion_ou
         return None
 
 if __name__ == '__main__':
-    # Ejemplo de uso:
-    # Reemplaza 'your_data.csv' con tu archivo y 'column_name' con tu columna.
-    # normalizar_datos('your_data.csv', 'column_name')
-
-    # Para ejecutar un ejemplo, creemos un CSV de prueba
     data = {'id': range(10), 'valor': [10, 20, 15, 30, 5, 40, 35, 25, 50, 45]}
     test_csv_path = 'test_data_norm.csv'
     pd.DataFrame(data).to_csv(test_csv_path, index=False)

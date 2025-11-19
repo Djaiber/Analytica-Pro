@@ -5,18 +5,13 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 def text_to_pdf(text, pdf):
-    """Agrega texto a una página en un PDF."""
-    fig = plt.figure(figsize=(8.27, 11.69))  # A4 size
+    fig = plt.figure(figsize=(8.27, 11.69))
     plt.axis('off')
     plt.text(0.05, 0.95, text, va='top', ha='left', wrap=True, fontsize=8, family='monospace')
     pdf.savefig(fig)
     plt.close(fig)
 
 def run_chimerge(file_path, output_pdf_path="chimerge_output.pdf", num_intervals_deseados1=3, num_intervals_deseados2=3):
-    """
-    Ejecuta la discretización Chi-Merge y guarda la salida de texto en un archivo PDF.
-    """
-    # Redirigir stdout para capturar la salida
     old_stdout = sys.stdout
     sys.stdout = captured_output = io.StringIO()
 
@@ -28,42 +23,33 @@ def run_chimerge(file_path, output_pdf_path="chimerge_output.pdf", num_intervals
         df['Y'] = pd.to_numeric(df['Y'])
     except FileNotFoundError:
         print(f"Error: El archivo {file_path} no fue encontrado.", file=sys.stderr)
-        sys.stdout = old_stdout # Restaurar stdout en caso de error
-        print(captured_output.getvalue(), file=sys.stderr)
-        sys.exit(1)
+        sys.stdout = old_stdout
+        return None
     except (KeyError, ValueError) as e:
         print(f"Error de datos: {e}", file=sys.stderr)
-        sys.stdout = old_stdout # Restaurar stdout
-        print(captured_output.getvalue(), file=sys.stderr)
-        sys.exit(1)
+        sys.stdout = old_stdout
+        return None
 
     classes = df['CLASE'].unique().tolist()
     if len(classes) != 2:
         print(f"Error: Se requieren 2 clases, pero se encontraron {len(classes)}: {classes}", file=sys.stderr)
-        sys.stdout = old_stdout # Restaurar stdout
-        print(captured_output.getvalue(), file=sys.stderr)
-        sys.exit(1)
+        sys.stdout = old_stdout
+        return None
 
-    # --- Procesar y capturar salida ---
     discretize_column(df, 'X', 'CLASE', num_intervals_deseados1, classes)
-    print("\n" + "="*50 + "\n") # Separador
+    print("\n" + "="*50 + "\n")
     discretize_column(df, 'Y', 'CLASE', num_intervals_deseados2, classes)
 
-    # --- Restaurar stdout y obtener el texto ---
     sys.stdout = old_stdout
     output_text = captured_output.getvalue()
 
-    # --- Guardar el texto en un PDF ---
     with PdfPages(output_pdf_path) as pdf:
         text_to_pdf(output_text, pdf)
     
     print(f"Resultados de Chi-Merge guardados en '{output_pdf_path}'")
-    # Opcional: imprimir también en la consola
-    # print(output_text)
-
+    return True
 
 def discretize_column(df, feature_col, class_col, num_intervals_deseados, classes):
-    """Imprime los pasos de la discretización Chi-Merge para una columna."""
     print(f"--- Discretizando columna '{feature_col}' ---")
     
     data = df[[feature_col, class_col]].sort_values(by=feature_col)
@@ -83,10 +69,8 @@ def discretize_column(df, feature_col, class_col, num_intervals_deseados, classe
         min_chi = min(chi_squares)
         min_index = chi_squares.index(min_chi)
 
-        # Imprimir el paso de fusión
         print(f"Fusionando {intervals_repr[min_index]} y {intervals_repr[min_index+1]} (Chi-cuadrado = {min_chi:.4f})")
 
-        # Fusionar
         intervals_data[min_index].extend(intervals_data[min_index + 1])
         del intervals_data[min_index + 1]
 
@@ -98,9 +82,7 @@ def discretize_column(df, feature_col, class_col, num_intervals_deseados, classe
     print(f'\nIntervalos finales para {feature_col}:')
     print(intervals_repr)
 
-
 def calculate_chi_square(interval1, interval2, classes):
-    """Calcula el valor de chi-cuadrado entre dos intervalos."""
     class1, class2 = classes[0], classes[1]
     A1 = sum(1 for _, c in interval1 if c == class1)
     B1 = sum(1 for _, c in interval1 if c == class2)
@@ -121,7 +103,6 @@ def calculate_chi_square(interval1, interval2, classes):
             if expected > 0:
                 chi_sq += ((obs - expected) ** 2) / expected
     return chi_sq
-
 
 if __name__ == '__main__':
     run_chimerge('your_data.csv')

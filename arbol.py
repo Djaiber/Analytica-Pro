@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 def text_to_pdf(text, pdf):
-    fig = plt.figure(figsize=(8.27, 11.69))  # A4 size
+    fig = plt.figure(figsize=(8.27, 11.69))
     plt.axis('off')
     plt.text(0.05, 0.95, text, va='top', ha='left', wrap=True, fontsize=8, family='monospace')
     pdf.savefig(fig)
