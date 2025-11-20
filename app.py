@@ -19,6 +19,12 @@ except ImportError as e:
     logging.error(f"Error al importar módulos de algoritmos: {e}")
 
 app = Flask("AnalyticaPro")
+# Use mounted volume for data storage
+DATA_VOLUME_PATH = "/app/data"
+
+# Ensure data directory exists
+os.makedirs(DATA_VOLUME_PATH, exist_ok=True)
+
 CORS(app)
 
 UPLOAD_FOLDER = 'uploads'
